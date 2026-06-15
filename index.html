@@ -135,17 +135,39 @@
             </section>
 
             <!-- Profil Mempelai -->
-            <section id="couple" class="mb-20 animate-on-scroll">
-                <h2 class="section-title">Mempelai</h2>
-                <div class="bg-cardbg rounded-3xl p-6 border border-cardborder shadow-xl mb-6 flex flex-col items-center text-center">
-                    <img id="groomImg" src="" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-cardborder mb-4 hidden">
-                    <h3 id="groomName" class="text-2xl font-script text-white mb-2"></h3>
-                    <p id="groomParents" class="text-sm text-textgray"></p>
+            <section id="couple" class="relative mb-20 py-16 px-4 rounded-3xl overflow-hidden animate-on-scroll shadow-2xl">
+                <!-- Background Latar Belakang (Gambar/Video) -->
+                <div class="absolute inset-0 z-0 pointer-events-none">
+                    <div class="absolute inset-0 bg-black/60 z-10"></div> <!-- Overlay gelap agar teks terbaca -->
+                    <!-- Gunakan tag img di bawah ini untuk gambar latar belakang -->
+                    <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2069&auto=format&fit=crop" class="w-full h-full object-cover z-0" alt="Background">
+                    <!-- Gunakan tag video di bawah ini jika ingin video latar belakang (hapus tag img di atas) -->
+                    <!-- <video autoplay loop muted playsinline class="w-full h-full object-cover z-0">
+                        <source src="URL_VIDEO_ANDA.mp4" type="video/mp4">
+                    </video> -->
                 </div>
-                <div class="bg-cardbg rounded-3xl p-6 border border-cardborder shadow-xl flex flex-col items-center text-center">
-                    <img id="brideImg" src="" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-cardborder mb-4 hidden">
-                    <h3 id="brideName" class="text-2xl font-script text-white mb-2"></h3>
-                    <p id="brideParents" class="text-sm text-textgray"></p>
+
+                <div class="relative z-20">
+                    <h2 class="section-title !mb-12 drop-shadow-lg">Mempelai</h2>
+                    
+                    <div class="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-20">
+                        <!-- Groom -->
+                        <div class="flex flex-col items-center text-center">
+                            <img id="groomImg" src="" class="w-40 h-40 md:w-48 md:h-48 rounded-full object-cover border-[4px] border-primary shadow-[0_0_20px_rgba(212,175,55,0.4)] mb-5 hidden hover:scale-110 transition-transform duration-300 cursor-zoom-in" onclick="zoomImage(this)">
+                            <h3 id="groomName" class="text-3xl font-script text-white mb-2 drop-shadow-md"></h3>
+                            <p id="groomParents" class="text-sm text-gray-200 drop-shadow-md max-w-[200px]"></p>
+                        </div>
+                        
+                        <!-- And symbol -->
+                        <div class="text-5xl font-script text-primary opacity-90 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)] md:mt-[-50px]">&</div>
+                        
+                        <!-- Bride -->
+                        <div class="flex flex-col items-center text-center">
+                            <img id="brideImg" src="" class="w-40 h-40 md:w-48 md:h-48 rounded-full object-cover border-[4px] border-primary shadow-[0_0_20px_rgba(212,175,55,0.4)] mb-5 hidden hover:scale-110 transition-transform duration-300 cursor-zoom-in" onclick="zoomImage(this)">
+                            <h3 id="brideName" class="text-3xl font-script text-white mb-2 drop-shadow-md"></h3>
+                            <p id="brideParents" class="text-sm text-gray-200 drop-shadow-md max-w-[200px]"></p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -238,6 +260,14 @@
     <button id="musicPlayerBtn" onclick="toggleMusic()" class="hidden bg-cardbg border border-cardborder shadow-[0_0_15px_rgba(126,87,194,0.4)] text-accent w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110">
         <i id="musicIcon" class="fa-solid fa-compact-disc text-xl"></i>
     </button>
+
+    <!-- Lightbox for Image Zoom -->
+    <div id="imageLightbox" class="fixed inset-0 z-[100] hidden bg-black/95 flex flex-col items-center justify-center p-4 transition-opacity duration-300 opacity-0" onclick="closeLightbox()">
+        <button class="absolute top-6 right-6 text-white hover:text-gray-300 z-[101] bg-white/10 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm" onclick="closeLightbox()">
+            <i class="fa-solid fa-times text-xl"></i>
+        </button>
+        <img id="lightboxImg" src="" class="max-w-full max-h-[90vh] object-contain rounded-xl transition-transform duration-300 scale-95 shadow-2xl" onclick="event.stopPropagation()">
+    </div>
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -554,6 +584,28 @@
                 observer.observe(el);
             });
         }, 500);
+
+        // Image Zoom Lightbox Logic
+        window.zoomImage = function(imgElement) {
+            const lightbox = document.getElementById('imageLightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            lightboxImg.src = imgElement.src;
+            lightbox.classList.remove('hidden');
+            // Trigger reflow
+            void lightbox.offsetWidth;
+            lightbox.classList.remove('opacity-0');
+            lightboxImg.classList.replace('scale-95', 'scale-100');
+        }
+
+        window.closeLightbox = function() {
+            const lightbox = document.getElementById('imageLightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            lightbox.classList.add('opacity-0');
+            lightboxImg.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
+            }, 300);
+        }
 
         // Countdown Timer Logic
         let countdownInterval;
