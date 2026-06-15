@@ -276,7 +276,7 @@
                     }
                     if (settings.bg_music_url) {
                         const audio = document.getElementById('bgMusic');
-                        audio.src = settings.bg_music_url;
+                        audio.setAttribute('src', settings.bg_music_url);
                         audio.load();
                     }
                 }
@@ -488,6 +488,9 @@
         window.toggleMusic = function() {
             const audio = document.getElementById('bgMusic');
             const icon = document.getElementById('musicIcon');
+            
+            if (!audio.getAttribute('src')) return; // Jangan jalankan jika tidak ada lagu
+            
             if (isMusicPlaying) {
                 audio.pause();
                 icon.classList.remove('animate-spin-slow');
@@ -513,7 +516,7 @@
             
             // Show music button if audio source exists
             const audio = document.getElementById('bgMusic');
-            if (audio.src && audio.src !== "" && !audio.src.endsWith(window.location.pathname)) {
+            if (audio.getAttribute('src')) {
                 document.getElementById('musicPlayerBtn').classList.remove('hidden');
                 if (!isMusicPlaying) toggleMusic(); // Play automatically
             }
