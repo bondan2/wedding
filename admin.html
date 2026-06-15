@@ -21,7 +21,7 @@
             }
         }
     </script>
-    <style>
+    <style type="text/tailwindcss">
         .stat-card { @apply bg-cardbg border border-cardborder text-white p-5 rounded-3xl shadow-xl flex justify-between items-start transition-transform hover:-translate-y-1; }
         .stat-icon { @apply w-10 h-10 bg-primary/20 text-primary rounded-full flex items-center justify-center text-lg shadow-inner; }
         .input-dark { @apply w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white focus:bg-white/10 focus:border-primary focus:ring-2 focus:ring-primary/50 focus:outline-none transition-all mb-4 shadow-sm placeholder-gray-500; }
@@ -34,11 +34,40 @@
         .table-dark { @apply w-full text-left border-collapse; }
         .table-dark th { @apply p-3 border-b border-cardborder text-sm font-semibold text-gray-400; }
         .table-dark td { @apply p-3 border-b border-cardborder text-sm text-gray-300; }
+        
+        /* Fix OS default styling for select options in dark mode */
+        option { @apply bg-cardbg text-white; }
+        
+        /* Fix Chrome autofill text blending */
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 50px #242424 inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
     </style>
 </head>
-<body class="bg-darkbg text-gray-200 font-sans h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="bg-darkbg text-gray-200 font-sans h-screen w-full overflow-hidden">
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-darkbg p-4 hidden">
+        <div class="bg-cardbg border border-cardborder p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <h2 class="text-3xl font-bold text-primary mb-2">Login Admin</h2>
+            <p class="text-xs text-gray-400 mb-8">Gunakan akun yang telah didaftarkan di Supabase untuk mengelola undangan.</p>
+            <form onsubmit="handleLogin(event)" class="text-left">
+                <label class="label-dark">Email Admin</label>
+                <input type="email" id="loginEmail" class="input-dark" required placeholder="admin@example.com">
+                
+                <label class="label-dark">Password</label>
+                <input type="password" id="loginPass" class="input-dark" required placeholder="••••••••">
+                
+                <button type="submit" id="btnLogin" class="bg-primary text-black font-bold px-6 py-4 rounded-2xl w-full shadow-[0_4px_14px_0_rgba(212,175,55,0.39)] hover:bg-white transition mt-4">
+                    Masuk ke Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
 
-    <!-- Mobile Overlay -->
+    <!-- Admin Wrapper -->
+    <div id="adminApp" class="hidden h-full w-full flex-col md:flex-row">
+        <!-- Mobile Overlay -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar (Desktop & Mobile) -->
@@ -64,6 +93,14 @@
             </div>
             <div class="btn-menu" onclick="switchTab('interactive', this)">
                 <i class="fa-solid fa-tower-broadcast w-5"></i> Live & Ucapan
+            </div>
+            <div class="btn-menu" onclick="switchTab('broadcast', this)">
+                <i class="fa-brands fa-whatsapp w-5"></i> Sebar Undangan (WA)
+            </div>
+            
+            <div class="border-t border-cardborder my-4 pt-4"></div>
+            <div class="btn-menu text-red-400 hover:bg-red-500/10 hover:text-red-400" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket w-5"></i> Keluar (Logout)
             </div>
         </nav>
     </aside>
@@ -115,7 +152,10 @@
                                 <label class="label-dark">Nama Orang Tua Pria</label>
                                 <input type="text" id="groomParents" class="input-dark">
                                 <label class="label-dark">Upload Foto Pria</label>
-                                <input type="file" id="groomPhoto" class="input-dark text-xs" accept="image/*">
+                                <div class="flex gap-4 items-center mb-4">
+                                    <img id="groomPreview" class="w-12 h-12 rounded-full object-cover hidden border border-cardborder">
+                                    <input type="file" id="groomPhoto" class="input-dark text-xs mb-0" accept="image/*">
+                                </div>
                             </div>
                             <!-- Bride -->
                             <div>
@@ -125,7 +165,10 @@
                                 <label class="label-dark">Nama Orang Tua Wanita</label>
                                 <input type="text" id="brideParents" class="input-dark">
                                 <label class="label-dark">Upload Foto Wanita</label>
-                                <input type="file" id="bridePhoto" class="input-dark text-xs" accept="image/*">
+                                <div class="flex gap-4 items-center mb-4">
+                                    <img id="bridePreview" class="w-12 h-12 rounded-full object-cover hidden border border-cardborder">
+                                    <input type="file" id="bridePhoto" class="input-dark text-xs mb-0" accept="image/*">
+                                </div>
                             </div>
                         </div>
                         <div class="mt-4 border-t border-cardborder pt-4 grid md:grid-cols-2 gap-6">
@@ -137,7 +180,10 @@
                             </div>
                             <div>
                                 <label class="label-dark">Upload Foto Cover Undangan</label>
-                                <input type="file" id="coverPhoto" class="input-dark text-xs" accept="image/*">
+                                <div class="flex gap-4 items-start mb-4">
+                                    <img id="coverPreview" class="w-24 h-32 rounded-xl object-cover hidden border border-cardborder">
+                                    <input type="file" id="coverPhoto" class="input-dark text-xs mb-0" accept="image/*">
+                                </div>
                             </div>
                         </div>
                         <button type="submit" id="btnSaveCouples" class="bg-primary text-black font-bold px-8 py-4 rounded-2xl w-full shadow-[0_4px_14px_0_rgba(212,175,55,0.39)] hover:shadow-[0_6px_20px_rgba(212,175,55,0.23)] hover:bg-white transition duration-200 mt-8">
@@ -286,8 +332,54 @@
                 </div>
             </div>
 
+            <!-- TAB 7: BROADCAST WA -->
+            <div id="tab-broadcast" class="tab-content max-w-4xl mx-auto space-y-6">
+                <div class="bg-cardbg rounded-3xl p-6 border border-cardborder shadow-xl">
+                    <h2 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fa-brands fa-whatsapp text-green-500"></i> Generator Pesan WhatsApp</h2>
+                    <p class="text-sm text-gray-400 mb-6">Buat pesan undangan otomatis untuk disebar ke kontak atau grup WhatsApp Anda.</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="label-dark">Sapaan</label>
+                            <select id="waSapaan" class="input-dark mb-0" onchange="generateWaPreview()">
+                                <option value="Bapak/Ibu/Saudara/i">Bapak/Ibu/Saudara/i</option>
+                                <option value="Bapak">Bapak</option>
+                                <option value="Ibu">Ibu</option>
+                                <option value="Saudara">Saudara</option>
+                                <option value="Saudari">Saudari</option>
+                                <option value="Teman-teman">Teman-teman (Grup)</option>
+                                <option value="">Tanpa Sapaan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="label-dark">Nama Tamu / Grup</label>
+                            <input type="text" id="waNama" class="input-dark mb-0" placeholder="Keluarga Besar XYZ..." oninput="generateWaPreview()">
+                        </div>
+                    </div>
+
+                    <label class="label-dark">Template Pesan</label>
+                    <textarea id="waTemplate" class="input-dark h-32" oninput="generateWaPreview()">Tanpa mengurangi rasa hormat, perkenankan kami mengundang [Sapaan] [NamaTamu] untuk hadir dan memberikan doa restu pada acara pernikahan kami.
+
+Detail acara dan undangan lengkap dapat diakses melalui tautan berikut:
+[Link]
+
+Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila [Sapaan] [NamaTamu] berkenan hadir. Terima kasih.</textarea>
+
+                    <div class="bg-darkbg p-4 rounded-2xl border border-cardborder mb-6">
+                        <label class="label-dark text-primary"><i class="fa-solid fa-eye"></i> Preview Pesan Anda:</label>
+                        <p id="waPreview" class="text-sm text-gray-300 whitespace-pre-wrap mt-2"></p>
+                    </div>
+
+                    <button onclick="sendWaMessage()" class="bg-green-500 hover:bg-green-400 text-black font-bold px-8 py-4 rounded-2xl w-full shadow-[0_4px_14px_0_rgba(34,197,94,0.39)] transition duration-200">
+                        <i class="fa-brands fa-whatsapp mr-2 text-lg"></i> Kirim Pesan via WhatsApp
+                    </button>
+                </div>
+            </div>
+
+        </div>
         </div>
     </main>
+    </div> <!-- End Admin Wrapper -->
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -299,7 +391,20 @@
         let currentCoupleId = null;
         let currentSettingsId = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                showDashboard();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            }
+        });
+
+        function showDashboard() {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('adminApp').classList.remove('hidden');
+            document.getElementById('adminApp').classList.add('flex');
+            
             loadStats();
             loadCouplesData();
             loadEventsData();
@@ -308,7 +413,32 @@
             loadRsvpData();
             loadStreamData();
             loadWishesAdmin();
-        });
+        }
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnLogin');
+            btn.innerText = 'Memverifikasi...'; btn.disabled = true;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPass').value
+            });
+
+            if (error) {
+                alert('Gagal Login: ' + error.message);
+                btn.innerText = 'Masuk ke Dashboard'; btn.disabled = false;
+            } else {
+                showDashboard();
+            }
+        }
+
+        window.handleLogout = async function() {
+            if(confirm('Yakin ingin keluar dari dashboard?')) {
+                await supabaseClient.auth.signOut();
+                location.reload();
+            }
+        }
 
         // Tab Switching Logic
         window.switchTab = function(tabId, el) {
@@ -352,14 +482,27 @@
                 currentCoupleId = couples.id;
                 document.getElementById('groomName').value = couples.groom_name;
                 document.getElementById('groomParents').value = couples.groom_parents || '';
+                if(couples.groom_photo_url) {
+                    const gp = document.getElementById('groomPreview');
+                    gp.src = couples.groom_photo_url; gp.classList.remove('hidden');
+                }
+
                 document.getElementById('brideName').value = couples.bride_name;
                 document.getElementById('brideParents').value = couples.bride_parents || '';
+                if(couples.bride_photo_url) {
+                    const bp = document.getElementById('bridePreview');
+                    bp.src = couples.bride_photo_url; bp.classList.remove('hidden');
+                }
             }
             const { data: setD } = await supabaseClient.from('settings').select('*').order('id', { ascending: true }).limit(1);
             if(setD && setD.length > 0) {
                 const settings = setD[0];
                 currentSettingsId = settings.id;
                 if(settings.event_date) document.getElementById('eventDate').value = settings.event_date;
+                if(settings.cover_image_url) {
+                    const cp = document.getElementById('coverPreview');
+                    cp.src = settings.cover_image_url; cp.classList.remove('hidden');
+                }
             }
         }
 
@@ -600,6 +743,35 @@
             ind.classList.remove('hidden');
             setTimeout(() => ind.classList.add('hidden'), 3000);
         }
+
+        // WhatsApp Broadcast Logic
+        function generateWaPreview() {
+            const sapaan = document.getElementById('waSapaan').value;
+            const nama = document.getElementById('waNama').value || 'Nama Tamu';
+            const template = document.getElementById('waTemplate').value;
+            
+            // Dapatkan URL saat ini tapi ganti /admin.html menjadi /index.html
+            const publicLink = window.location.href.replace('admin.html', 'index.html');
+            
+            let finalMsg = template
+                .replace(/\[Sapaan\]/g, sapaan)
+                .replace(/\[NamaTamu\]/g, nama)
+                .replace(/\[Link\]/g, publicLink);
+                
+            // Bersihkan spasi ganda jika Sapaan kosong
+            finalMsg = finalMsg.replace(/  +/g, ' ');
+            document.getElementById('waPreview').innerText = finalMsg;
+            return finalMsg;
+        }
+
+        function sendWaMessage() {
+            const msg = generateWaPreview();
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
+        // Jalankan preview pertama kali
+        setTimeout(generateWaPreview, 500);
     </script>
 </body>
 </html>
